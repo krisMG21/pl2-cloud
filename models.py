@@ -1,32 +1,16 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import validates
+from datetime import datetime, timezone
 
 from app import db
 
-
-class Restaurant(db.Model):
-    __tablename__ = 'restaurant'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50))
-    street_address = Column(String(50))
-    description = Column(String(250))
-
-    def __str__(self):
-        return self.name
-
-class Review(db.Model):
-    __tablename__ = 'review'
-    id = Column(Integer, primary_key=True)
-    restaurant = Column(Integer, ForeignKey('restaurant.id', ondelete="CASCADE"))
-    user_name = Column(String(30))
-    rating = Column(Integer)
-    review_text = Column(String(500))
-    review_date = Column(DateTime)
-
-    @validates('rating')
-    def validate_rating(self, key, value):
-        assert value is None or (1 <= value <= 5)
-        return value
-
-    def __str__(self):
-        return f"{self.user_name}: {self.review_date:%x}"
+class Image(db.Model):
+    __tablename__ = 'image'
+    id = db.Column(db.Integer, primary_key=True)
+    file_name = db.Column(db.String(255), nullable=False)
+    red_pixels = db.Column(db.Integer, nullable=False)
+    green_pixels = db.Column(db.Integer, nullable=False)
+    blue_pixels = db.Column(db.Integer, nullable=False)
+    original_image_url = db.Column(db.String(255), nullable=False)
+    processed_image_url = db.Column(db.String(255), nullable=False)
+    reception_date = db.Column(db.DateTime(), default=datetime.now(timezone.utc), nullable=False)

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Upload Log{% endblock %}
+{% block content %}
+<h1>Upload Log</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>File Name</th>
+            <th>Red Pixels</th>
+            <th>Green Pixels</th>
+            <th>Blue Pixels</th>
+            <th>Reception Date</th>
+            <th>Original Image</th>
+            <th>Processed Image</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.id }}</td>
+            <td>{{ log.file_name }}</td>
+            <td>{{ log.red_pixels }}</td>
+            <td>{{ log.green_pixels }}</td>
+            <td>{{ log.blue_pixels }}</td>
+            <td>{{ log.reception_date }}</td>
+            <td>
+                <a href="{{ log.original_image_url }}" class="btn btn-sm btn-primary" target="_blank">View Original</a>
+            </td>
+            <td>
+                <a href="{{ log.processed_image_url }}" class="btn btn-sm btn-secondary" target="_blank">View Processed</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

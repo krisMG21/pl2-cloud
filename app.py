@@ -1,23 +1,18 @@
-import os
-from datetime import datetime
-
-from flask import Flask, redirect, render_template, request, send_from_directory, url_for
+from flask import Flask, render_template, request, url_for
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-
+from werkzeug.utils import secure_filename
+import os
+import re
 
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
 
-# WEBSITE_HOSTNAME exists only in production environment
+# Load configuration
 if 'WEBSITE_HOSTNAME' not in os.environ:
-    # local development, where we'll use environment variables
-    print("Loading config.development and environment variables from .env file.")
     app.config.from_object('azureproject.development')
 else:
-    # production
-    print("Loading config.production.")
     app.config.from_object('azureproject.production')
 
 app.config.update(
@@ -32,92 +27,67 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 # The import must be done after db initialization due to circular import issue
-from models import Restaurant, Review
+from models import Image
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
-    print('Request for index page received')
-    restaurants = Restaurant.query.all()
-    return render_template('index.html', restaurants=restaurants)
+    # Redirect to the gallery page or render a placeholder page
+    return render_template('index.html', restaurants=[])
 
-@app.route('/<int:id>', methods=['GET'])
-def details(id):
-    restaurant = Restaurant.query.where(Restaurant.id == id).first()
-    reviews = Review.query.where(Review.restaurant == id)
-    return render_template('details.html', restaurant=restaurant, reviews=reviews)
-
-@app.route('/create', methods=['GET'])
-def create_restaurant():
-    print('Request for add restaurant page received')
-    return render_template('create_restaurant.html')
+@app.route('/upload-log', methods=['GET'])
+def upload_log():
+    # Query all images to simulate an upload log
+    logs = Image.query.order_by(Image.reception_date.desc()).all()
+    return render_template('upload_log.html', logs=logs)
 
 @app.route('/add', methods=['POST'])
 @csrf.exempt
-def add_restaurant():
+def upload_image():
     try:
-        name = request.values.get('restaurant_name')
-        street_address = request.values.get('street_address')
-        description = request.values.get('description')
-    except (KeyError):
-        # Redisplay the question voting form.
-        return render_template('add_restaurant.html', {
-            'error_message': "You must include a restaurant name, address, and description",
-        })
-    else:
-        restaurant = Restaurant()
-        restaurant.name = name
-        restaurant.street_address = street_address
-        restaurant.description = description
-        db.session.add(restaurant)
+        file_name = request.form.get('file_name')
+        red_pixels = request.form.get('red_pixels')
+        green_pixels = request.form.get('green_pixels')
+        blue_pixels = request.form.get('blue_pixels')
+        original_file = request.files.get('original_image')
+        processed_file = request.files.get('processed_image')
+
+        if not file_name or not red_pixels or not green_pixels or not blue_pixels or not original_file or not processed_file:
+            return "Missing required fields.", 400
+
+        try:
+            red_pixels = int(red_pixels)
+            green_pixels = int(green_pixels)
+            blue_pixels = int(blue_pixels)
+        except ValueError:
+            return "Pixel values must be integers.", 400
+
+        orig_filename = secure_filename(original_file.filename)
+        proc_filename = secure_filename(processed_file.filename)
+        orig_path = os.path.join(app.static_folder, 'uploads', orig_filename)
+        proc_path = os.path.join(app.static_folder, 'uploads', proc_filename)
+        os.makedirs(os.path.dirname(orig_path), exist_ok=True)
+        original_file.save(orig_path)
+        processed_file.save(proc_path)
+
+        original_image_url = url_for('static', filename=f'uploads/{orig_filename}')
+        processed_image_url = url_for('static', filename=f'uploads/{proc_filename}')
+
+        new_entry = Image(
+            file_name=file_name,
+            red_pixels=red_pixels,
+            green_pixels=green_pixels,
+            blue_pixels=blue_pixels,
+            original_image_url=original_image_url,
+            processed_image_url=processed_image_url
+        )
+        db.session.add(new_entry)
         db.session.commit()
 
-        return redirect(url_for('details', id=restaurant.id))
+        return f"Entry added successfully for {file_name}.", 201
+    except Exception as e:
+        return f"Error uploading image: {str(e)}", 500
 
-@app.route('/review/<int:id>', methods=['POST'])
-@csrf.exempt
-def add_review(id):
-    try:
-        user_name = request.values.get('user_name')
-        rating = request.values.get('rating')
-        review_text = request.values.get('review_text')
-    except (KeyError):
-        #Redisplay the question voting form.
-        return render_template('add_review.html', {
-            'error_message': "Error adding review",
-        })
-    else:
-        review = Review()
-        review.restaurant = id
-        review.review_date = datetime.now()
-        review.user_name = user_name
-        review.rating = int(rating)
-        review.review_text = review_text
-        db.session.add(review)
-        db.session.commit()
-
-    return redirect(url_for('details', id=id))
-
-@app.context_processor
-def utility_processor():
-    def star_rating(id):
-        reviews = Review.query.where(Review.restaurant == id)
-
-        ratings = []
-        review_count = 0
-        for review in reviews:
-            ratings += [review.rating]
-            review_count += 1
-
-        avg_rating = sum(ratings) / len(ratings) if ratings else 0
-        stars_percent = round((avg_rating / 5.0) * 100) if review_count > 0 else 0
-        return {'avg_rating': avg_rating, 'review_count': review_count, 'stars_percent': stars_percent}
-
-    return dict(star_rating=star_rating)
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-if __name__ == '__main__':
-    app.run()
+# @app.route('/gallery', methods=['GET'])
+# def gallery():
+#     images = Image.query.all()
+#     return render_template('gallery.html', images=images)
