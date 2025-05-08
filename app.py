@@ -58,13 +58,14 @@ def upload_image():
         # creamos la entrada sin URL ni fecha aún
         new_entry = Image(
             file_name           = f"{file_name} ({suffix})",
+            user_name           = user_name,
             red_pixels          = red_pixels,
             green_pixels        = green_pixels,
             blue_pixels         = blue_pixels,
             original_image_url  = "", # placeholder
             processed_image_url = "", # placeholder
-            user_name           = user_name,
-            reception_date     = datetime.now(timezone.utc)  # fecha de recepción
+            # timezone de españa
+            reception_date     = datetime.now(timezone.utc+7200) 
         )
         db.session.add(new_entry)
         db.session.flush()   # fuerza INSERT para obtener new_entry.id
