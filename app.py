@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from flask import Flask, render_template, request, url_for
+import shutil
+from flask import Flask, jsonify, render_template, request, url_for
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
@@ -92,6 +93,35 @@ def upload_image():
         db.session.rollback()
         return f"Error: {str(e)}", 500
     
+
+@app.route('/clear_uploads', methods=['GET'])
+@csrf.exempt
+def clear_uploads():
+    try:
+        # Ruta al directorio de uploads
+        uploads_dir = os.path.join(app.static_folder, 'uploads')
+
+        # Borrar todo el directorio y recrearlo vacío
+        if os.path.exists(uploads_dir):
+            shutil.rmtree(uploads_dir)
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        # Eliminar todas las filas de la tabla Image
+        deleted = Image.query.delete()
+        db.session.commit()
+
+        return jsonify({
+            'status': 'ok',
+            'deleted_entries': deleted,
+            'uploads_folder_cleared': True
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 # @app.route('/gallery', methods=['GET'])
 # def gallery():
