@@ -7,6 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 import os
 import re
+import pytz
 
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
@@ -64,8 +65,8 @@ def upload_image():
             blue_pixels         = blue_pixels,
             original_image_url  = "", # placeholder
             processed_image_url = "", # placeholder
-            # timezone de españa
-            reception_date = datetime.now(timezone(timedelta(hours=2)))
+            # Spanish timezone (Madrid) - handles DST automatically
+            reception_date = datetime.now(pytz.timezone('Europe/Madrid'))
         )
         db.session.add(new_entry)
         db.session.flush()   # fuerza INSERT para obtener new_entry.id
