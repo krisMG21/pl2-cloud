@@ -47,7 +47,7 @@ def upload_log():
 def upload_image():
     try:
         file_name       = request.form.get('file_name')
-        user_name       = request.form['username']
+        user_name       = request.form.get('username')
         suffix          = request.form.get('suffix')
         red_pixels      = int(request.form.get('red_pixels'))
         green_pixels    = int(request.form.get('green_pixels'))
