@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import shutil
 from flask import Flask, jsonify, render_template, request, url_for
 from flask_migrate import Migrate
@@ -65,7 +65,7 @@ def upload_image():
             original_image_url  = "", # placeholder
             processed_image_url = "", # placeholder
             # timezone de españa
-            reception_date     = datetime.now(timezone.utc+7200) 
+            reception_date = datetime.now(timezone(timedelta(hours=2)))
         )
         db.session.add(new_entry)
         db.session.flush()   # fuerza INSERT para obtener new_entry.id
