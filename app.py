@@ -55,7 +55,7 @@ def upload_image():
         original_file   = request.files.get('original_image')
         processed_file  = request.files.get('processed_image')
 
-        # creamos la entrada sin URL ni fecha aún
+        # creamos la entrada sin URL ni fecha todavia
         new_entry = Image(
             file_name           = f"{file_name} ({suffix})",
             user_name           = user_name,
