@@ -1,5 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String
-from sqlalchemy.orm import validates
+from sqlalchemy import Column, DateTime, String
 from datetime import datetime, timezone
 
 
@@ -16,4 +15,3 @@ class Image(db.Model):
     processed_image_url = db.Column(db.String(255), nullable=False)
     user_name             = Column(String(100), nullable=False) 
     reception_date        = Column(DateTime(timezone=True),default=lambda: datetime.now(timezone.utc),nullable=False)
-    

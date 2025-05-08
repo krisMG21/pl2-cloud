@@ -34,7 +34,7 @@ from models import Image
 @app.route('/')
 def index():
     # Redirect to the gallery page or render a placeholder page
-    return render_template('index.html', restaurants=[])
+    return render_template('index.html')
 
 @app.route('/upload-log', methods=['GET'])
 def upload_log():
@@ -122,8 +122,3 @@ def clear_uploads():
             'status': 'error',
             'message': str(e)
         }), 500
-
-# @app.route('/gallery', methods=['GET'])
-# def gallery():
-#     images = Image.query.all()
-#     return render_template('gallery.html', images=images)
