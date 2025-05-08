@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from flask import Flask, render_template, request, url_for
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -44,48 +45,51 @@ def upload_log():
 @csrf.exempt
 def upload_image():
     try:
-        file_name = request.form.get('file_name')
-        red_pixels = request.form.get('red_pixels')
-        green_pixels = request.form.get('green_pixels')
-        blue_pixels = request.form.get('blue_pixels')
-        original_file = request.files.get('original_image')
-        processed_file = request.files.get('processed_image')
+        file_name       = request.form.get('file_name')
+        suffix          = request.form.get('suffix')
+        red_pixels      = int(request.form.get('red_pixels'))
+        green_pixels    = int(request.form.get('green_pixels'))
+        blue_pixels     = int(request.form.get('blue_pixels'))
+        original_file   = request.files.get('original_image')
+        processed_file  = request.files.get('processed_image')
 
-        if not file_name or not red_pixels or not green_pixels or not blue_pixels or not original_file or not processed_file:
-            return "Missing required fields.", 400
+        # creamos la entrada sin URL ni fecha aún
+        new_entry = Image(
+            file_name           = f"{file_name} ({suffix})",
+            red_pixels          = red_pixels,
+            green_pixels        = green_pixels,
+            blue_pixels         = blue_pixels,
+            original_image_url  = "", # placeholder
+            processed_image_url = "", # placeholder
+            reception_date     = datetime.now(timezone.utc)  # fecha de recepción
+        )
+        db.session.add(new_entry)
+        db.session.flush()   # fuerza INSERT para obtener new_entry.id
 
-        try:
-            red_pixels = int(red_pixels)
-            green_pixels = int(green_pixels)
-            blue_pixels = int(blue_pixels)
-        except ValueError:
-            return "Pixel values must be integers.", 400
+        # construimos nombres con el ID y el suffix
+        orig_filename = secure_filename(f"{new_entry.id}_orig_{file_name}.bmp")
+        proc_filename = secure_filename(f"{new_entry.id}_{suffix}_{file_name}.bmp")
 
-        orig_filename = secure_filename(original_file.filename)
-        proc_filename = secure_filename(processed_file.filename)
         orig_path = os.path.join(app.static_folder, 'uploads', orig_filename)
         proc_path = os.path.join(app.static_folder, 'uploads', proc_filename)
         os.makedirs(os.path.dirname(orig_path), exist_ok=True)
+
+        # guardamos archivos en disco
         original_file.save(orig_path)
         processed_file.save(proc_path)
 
-        original_image_url = url_for('static', filename=f'uploads/{orig_filename}')
-        processed_image_url = url_for('static', filename=f'uploads/{proc_filename}')
+        # actualizamos las URLs usando url_for
+        new_entry.original_image_url  = url_for('static', filename=f'uploads/{orig_filename}')
+        new_entry.processed_image_url = url_for('static', filename=f'uploads/{proc_filename}')
 
-        new_entry = Image(
-            file_name=file_name,
-            red_pixels=red_pixels,
-            green_pixels=green_pixels,
-            blue_pixels=blue_pixels,
-            original_image_url=original_image_url,
-            processed_image_url=processed_image_url
-        )
-        db.session.add(new_entry)
         db.session.commit()
 
-        return f"Entry added successfully for {file_name}.", 201
+        return f"Entry {new_entry.id} added.", 201
+
     except Exception as e:
-        return f"Error uploading image: {str(e)}", 500
+        db.session.rollback()
+        return f"Error: {str(e)}", 500
+    
 
 # @app.route('/gallery', methods=['GET'])
 # def gallery():

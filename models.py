@@ -2,6 +2,7 @@ from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import validates
 from datetime import datetime, timezone
 
+
 from app import db
 
 class Image(db.Model):
@@ -13,4 +14,10 @@ class Image(db.Model):
     blue_pixels = db.Column(db.Integer, nullable=False)
     original_image_url = db.Column(db.String(255), nullable=False)
     processed_image_url = db.Column(db.String(255), nullable=False)
-    reception_date = db.Column(db.DateTime(), default=datetime.now(timezone.utc), nullable=False)
+     # <-- Usamos un lambda para que se ejecute en cada inserción:
+    reception_date = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
+    
