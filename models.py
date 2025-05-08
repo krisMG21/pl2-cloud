@@ -14,10 +14,6 @@ class Image(db.Model):
     blue_pixels = db.Column(db.Integer, nullable=False)
     original_image_url = db.Column(db.String(255), nullable=False)
     processed_image_url = db.Column(db.String(255), nullable=False)
-     # <-- Usamos un lambda para que se ejecute en cada inserción:
-    reception_date = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False
-    )
+    user_name             = Column(String(100), nullable=False) 
+    reception_date        = Column(DateTime(timezone=True),default=lambda: datetime.now(timezone.utc),nullable=False)
     

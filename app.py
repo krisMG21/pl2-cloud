@@ -46,6 +46,7 @@ def upload_log():
 def upload_image():
     try:
         file_name       = request.form.get('file_name')
+        user_name       = request.form['username']
         suffix          = request.form.get('suffix')
         red_pixels      = int(request.form.get('red_pixels'))
         green_pixels    = int(request.form.get('green_pixels'))
@@ -61,6 +62,7 @@ def upload_image():
             blue_pixels         = blue_pixels,
             original_image_url  = "", # placeholder
             processed_image_url = "", # placeholder
+            user_name           = user_name,
             reception_date     = datetime.now(timezone.utc)  # fecha de recepción
         )
         db.session.add(new_entry)
