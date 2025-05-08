@@ -95,7 +95,7 @@ def upload_image():
         return f"Error: {str(e)}", 500
     
 
-@app.route('/clear_uploads', methods=['GET'])
+@app.route('/clear-uploads', methods=['GET'])
 @csrf.exempt
 def clear_uploads():
     try:
